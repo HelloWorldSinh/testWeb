@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
+import axiosInstance from '../axios';
 
 const StudentDashBoard = () => {
   const { user } = useContext(AuthContext);
@@ -15,30 +15,25 @@ const StudentDashBoard = () => {
     highestScore: 0
   });
 
-  useEffect(() => {
-    const fetchExams = async () => {
+  useEffect(() => {    const fetchExams = async () => {
       try {
-        const res = await axios.get('/api/exams/available');
+        const res = await axiosInstance.get('/api/exams/available');
         setExams(res.data);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching exams:', err);
         setLoading(false);
       }
-    };
-
-    const fetchSubmissions = async () => {
+    };    const fetchSubmissions = async () => {
       try {
-        const res = await axios.get('/api/submissions/student');
+        const res = await axiosInstance.get('/api/submissions/student');
         setSubmissions(res.data);
       } catch (err) {
         console.error('Error fetching submissions:', err);
       }
-    };
-
-    const fetchStats = async () => {
+    };    const fetchStats = async () => {
       try {
-        const res = await axios.get('/api/submissions/stats');
+        const res = await axiosInstance.get('/api/submissions/stats');
         setStats(res.data);
       } catch (err) {
         console.error('Error fetching stats:', err);

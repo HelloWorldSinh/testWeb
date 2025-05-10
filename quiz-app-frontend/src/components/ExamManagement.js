@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../axios';
 
 const ExamManagement = () => {
     const { id } = useParams();
@@ -12,21 +12,11 @@ const ExamManagement = () => {
     const [exportLoading, setExportLoading] = useState(false);
 
     useEffect(() => {
-        const fetchExam = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const examResponse = await axios.get(`http://localhost:5000/api/exams/${id}`, {
-                    headers: {
-                        'x-auth-token': token
-                    }
-                });
+        const fetchExam = async () => {            try {
+                const examResponse = await axiosInstance.get(`/api/exams/${id}`);
                 setExam(examResponse.data);
                 
-                const submissionsResponse = await axios.get(`http://localhost:5000/api/submissions/exam/${id}`, {
-                    headers: {
-                        'x-auth-token': token
-                    }
-                });
+                const submissionsResponse = await axiosInstance.get(`/api/submissions/exam/${id}`);
                 setSubmissions(submissionsResponse.data);
                 setLoading(false);
             } catch (error) {

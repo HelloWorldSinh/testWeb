@@ -1,7 +1,7 @@
 import React, { useState, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
+import axiosInstance from '../axios';
 
 const CreateExam = () => {
   const { user } = useContext(AuthContext);
@@ -228,9 +228,8 @@ const CreateExam = () => {
     
     if (Object.keys(validationErrors).length === 0) {
       setLoading(true);
-      
-      try {
-        await axios.post('/api/exams', examData);
+        try {
+        await axiosInstance.post('/api/exams', examData);
         navigate('/exams');
       } catch (err) {
         console.error('Error creating exam:', err);

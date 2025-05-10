@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../axios';
 
 const Exam = () => {
     const { id } = useParams();
@@ -18,7 +18,7 @@ const Exam = () => {
         const fetchExam = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.get(`http://localhost:5000/api/exams/${id}`, {
+                const response = await axiosInstance.get(`/api/exams/${id}`, {
                     headers: {
                         'x-auth-token': token
                     }
@@ -77,12 +77,10 @@ const Exam = () => {
             }
         }
 
-        setSubmitting(true);
-
-        try {
+        setSubmitting(true);        try {
             const token = localStorage.getItem('token');
-            const response = await axios.post(
-                'http://localhost:5000/api/submissions',
+            const response = await axiosInstance.post(
+                '/api/submissions',
                 {
                     examId: id,
                     answers: Object.entries(answers).map(([questionId, answer]) => ({

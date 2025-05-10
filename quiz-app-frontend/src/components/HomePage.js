@@ -7,7 +7,7 @@ const HomePage = () => {
       <section className="hero-section">
         <div className="container">
           <div className="hero-content">
-            <h1 className="hero-title">Học tập thông minh với <span className="highlight">TRẮC NGHIỆM</span></h1>
+            <h1 className="hero-title">Học tập thông minh với <span className="highlight">Quiz App</span></h1>
             <p className="hero-description">
               Nền tảng thi trắc nghiệm trực tuyến hiện đại dành cho giáo viên và học sinh.
               Tạo, chia sẻ và làm bài kiểm tra một cách đơn giản, nhanh chóng.

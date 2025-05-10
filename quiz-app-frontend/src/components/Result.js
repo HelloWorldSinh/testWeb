@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../axios';
 
 const Result = () => {
     const { examId } = useParams();
@@ -9,7 +9,7 @@ const Result = () => {
     useEffect(() => {
         const fetchResult = async () => {
             try {
-                const res = await axios.get(`http://localhost:5000/api/submissions/${examId}`);
+                const res = await axiosInstance.get(`/api/submissions/${examId}`);
                 setResult(res.data);
             } catch (error) {
                 alert(error.response.data.message);
