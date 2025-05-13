@@ -8,6 +8,7 @@ import TeacherDashboard from './components/TeacherDashBoard';
 import CreateExam from './components/CreateExam';
 import Exam from './components/Exam';
 import Result from './components/Result';
+import ExamList from './components/ExamList';
 
 const App = () => {
   const { user } = useContext(AuthContext);
@@ -28,6 +29,10 @@ const App = () => {
         <Route
           path="/create-exam"
           element={user?.role === 'teacher' ? <CreateExam /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/exam-list"
+          element={user?.role === 'teacher' ? <ExamList /> : <Navigate to="/login" />}
         />
         <Route
           path="/exam/:code"

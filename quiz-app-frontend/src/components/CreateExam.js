@@ -8,6 +8,8 @@ const CreateExam = () => {
     const [examId, setExamId] = useState(null);
     const [examCode, setExamCode] = useState('');
     const [questions, setQuestions] = useState([]);
+    const [shuffleQuestions, setShuffleQuestions] = useState(false);
+    const [shuffleAnswers, setShuffleAnswers] = useState(false);
 
     const getAnswerLabel = (index) => String.fromCharCode(65 + index); // 65 = 'A'
 
@@ -17,11 +19,11 @@ const CreateExam = () => {
             const res = await axios.post('http://localhost:5000/api/exams/create', {
                 title,
                 startTime,
-                endTime,
+                endTime
             });
             setExamId(res.data._id);
             setExamCode(res.data.code);
-            setQuestions([{ content: '', answers: [{ content: '', isCorrect: false }], media: null, isEditing: true }]);
+            setQuestions([{ content: '', answers: [{ content: '', isCorrect: false }], media: null, mediaURL: null, mediaType: null, isEditing: true }]);
             alert(`Exam created with code: ${res.data.code}`);
         } catch (error) {
             alert(error.response.data.message);
@@ -58,12 +60,16 @@ const CreateExam = () => {
         );
         setQuestions([
             ...updatedQuestions,
-            { content: '', answers: [{ content: '', isCorrect: false }], media: null, isEditing: true }
+            { content: '', answers: [{ content: '', isCorrect: false }], media: null, mediaURL: null, mediaType: null, isEditing: true }
         ]);
     };
 
     const handleRemoveQuestion = (index) => {
         const updatedQuestions = questions.filter((_, i) => i !== index);
+        // Thu hồi mediaURL của câu hỏi bị xóa
+        if (questions[index].mediaURL) {
+            URL.revokeObjectURL(questions[index].mediaURL);
+        }
         setQuestions(updatedQuestions);
     };
 
@@ -77,8 +83,26 @@ const CreateExam = () => {
 
     const handleUpdateQuestion = (index, field, value) => {
         const updatedQuestions = [...questions];
-        if (field === 'content' || field === 'media') {
+        if (field === 'content') {
             updatedQuestions[index][field] = value;
+        } else if (field === 'media') {
+            // Thu hồi mediaURL cũ nếu có
+            if (updatedQuestions[index].mediaURL) {
+                URL.revokeObjectURL(updatedQuestions[index].mediaURL);
+            } let mediaURL = null;
+            let mediaType = null;
+            if (value) {
+                if (value.type.startsWith('image/')) {
+                    mediaType = 'image';
+                    mediaURL = URL.createObjectURL(value);
+                } else if (value.type.startsWith('audio/')) {
+                    mediaType = 'audio';
+                    mediaURL = URL.createObjectURL(value);
+                }
+            }
+            updatedQuestions[index].media = value;
+            updatedQuestions[index].mediaURL = mediaURL;
+            updatedQuestions[index].mediaType = mediaType;
         } else if (field === 'answers') {
             updatedQuestions[index].answers = value;
         }
@@ -103,6 +127,15 @@ const CreateExam = () => {
                 if (question.media) formData.append('media', question.media);
                 await axios.post('http://localhost:5000/api/exams/questions', formData);
             }
+            //Cập nhật shuffleQuestions và shuffleAnswers
+            await axios.patch(`http://localhost:5000/api/exams/${examId}`, {
+                shuffleQuestions,
+                shuffleAnswers
+            });
+            // Thu hồi tất cả mediaURL trước khi reset
+            questions.forEach(q => {
+                if (q.mediaURL) URL.revokeObjectURL(q.mediaURL);
+            });
             alert('Exam completed and questions saved');
             setQuestions([]);
             setExamId(null);
@@ -145,7 +178,9 @@ const CreateExam = () => {
                                 marginBottom: '20px',
                                 padding: '10px',
                                 border: '1px solid #ccc',
+                                cursor: question.isEditing ? 'default' : 'pointer',
                             }}
+                            onClick={() => !question.isEditing && handleEditQuestion(index)}
                         >
                             <h4>Question {index + 1}</h4>
                             {question.isEditing ? (
@@ -163,6 +198,27 @@ const CreateExam = () => {
                                         onChange={(e) => handleUpdateQuestion(index, 'media', e.target.files[0])}
                                         style={{ marginBottom: '10px' }}
                                     />
+                                    {question.mediaURL && question.mediaType === 'image' && (
+                                        <img
+                                            src={question.mediaURL}
+                                            alt="Selected media"
+                                            style={{
+                                                maxWidth: '300px',
+                                                height: 'auto',
+                                                marginTop: '10px',
+                                                borderRadius: '5px',
+                                            }}
+                                        />
+                                    )}
+                                    {question.mediaURL && question.mediaType === 'audio' && (
+                                        <audio
+                                            controls
+                                            src={question.mediaURL}
+                                            style={{ marginTop: '10px' }}
+                                        >
+                                            Your browser does not support the audio element.
+                                        </audio>
+                                    )}
                                     {question.answers.map((answer, ansIndex) => (
                                         <div
                                             key={ansIndex}
@@ -219,8 +275,26 @@ const CreateExam = () => {
                             ) : (
                                 <div>
                                     <strong>{question.content}</strong>
-                                    {question.media && (
-                                        <p>Media: {question.media.name || 'File attached'}</p>
+                                    {question.mediaURL && question.mediaType === 'image' && (
+                                        <img
+                                            src={question.mediaURL}
+                                            alt="Question media"
+                                            style={{
+                                                maxWidth: '300px',
+                                                height: 'auto',
+                                                marginTop: '10px',
+                                                borderRadius: '5px',
+                                            }}
+                                        />
+                                    )}
+                                    {question.mediaURL && question.mediaType === 'audio' && (
+                                        <audio
+                                            controls
+                                            src={question.mediaURL}
+                                            style={{ marginTop: '10px' }}
+                                        >
+                                            Your browser does not support the audio element.
+                                        </audio>
                                     )}
                                     <ul style={{ marginTop: '10px' }}>
                                         {question.answers.map((ans, ansIndex) => (
@@ -236,13 +310,10 @@ const CreateExam = () => {
                                         ))}
                                     </ul>
                                     <button
-                                        onClick={() => handleEditQuestion(index)}
-                                        style={{ marginRight: '10px', padding: '5px 10px' }}
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() => handleRemoveQuestion(index)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveQuestion(index);
+                                        }}
                                         style={{ background: 'red', color: 'white', padding: '5px 10px' }}
                                     >
                                         Delete
@@ -251,6 +322,24 @@ const CreateExam = () => {
                             )}
                         </div>
                     ))}
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{ marginRight: '20px' }}>
+                            <input
+                                type="checkbox"
+                                checked={shuffleQuestions}
+                                onChange={(e) => setShuffleQuestions(e.target.checked)}
+                            />
+                            Trộn câu hỏi
+                        </label>
+                        <label>
+                            <input
+                                type="checkbox"
+                                checked={shuffleAnswers}
+                                onChange={(e) => setShuffleAnswers(e.target.checked)}
+                            />
+                            Trộn đáp án
+                        </label>
+                    </div>
                     <button
                         onClick={handleCompleteExam}
                         style={{ padding: '10px 20px', background: 'green', color: 'white' }}
