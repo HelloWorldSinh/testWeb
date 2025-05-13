@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import './Exam.css';
 
 const Exam = () => {
     const { code } = useParams();
@@ -8,6 +9,10 @@ const Exam = () => {
     const [exam, setExam] = useState(null);
     const [answers, setAnswers] = useState([]);
     const [shuffledQuestions, setShuffledQuestions] = useState([]);
+
+    const [currentQuestion, setCurrentQuestion] = useState(0);
+    const [loading, setLoading] = useState(true);
+
 
     // Hàm trộn mảng (Fisher-Yates shuffle)
     const shuffleArray = (array) => {
@@ -21,6 +26,7 @@ const Exam = () => {
 
     useEffect(() => {
         const fetchExam = async () => {
+            setLoading(true);
             try {
                 const res = await axios.get(`http://localhost:5000/api/exams/${code}`);
                 let questions = res.data.questions;
@@ -50,8 +56,12 @@ const Exam = () => {
                 setExam(res.data);
                 setShuffledQuestions(questions);
                 setAnswers(questions.map(() => null));
+
+                setLoading(false);
+
             } catch (error) {
                 alert(error.response.data.message);
+                setLoading(false);
             }
         };
         fetchExam();
@@ -61,9 +71,11 @@ const Exam = () => {
         const newAnswers = [...answers];
         newAnswers[questionIndex] = answerIndex;
         setAnswers(newAnswers);
-    };
-
-    const handleSubmit = async () => {
+    };    const handleSubmit = async () => {
+        if (!window.confirm('Bạn có chắc chắn muốn nộp bài không?')) {
+            return;
+        }
+        
         try {
             // Map lại chỉ số đáp án theo thứ tự gốc
             const submissionAnswers = shuffledQuestions.map((q, i) => {
@@ -88,6 +100,94 @@ const Exam = () => {
             alert(error.response.data.message);
         }
     };
+    const goToNextQuestion = () => {
+        if (currentQuestion < shuffledQuestions.length - 1) {
+            setCurrentQuestion(currentQuestion + 1);
+        }
+    };
+
+    const goToPrevQuestion = () => {
+        if (currentQuestion > 0) {
+            setCurrentQuestion(currentQuestion - 1);
+        }
+    };
+
+    const goToQuestion = (index) => {
+        setCurrentQuestion(index);
+    };
+
+    const calculateProgress = () => {
+        const answeredCount = answers.filter(a => a !== null).length;
+        return {
+            percent: (answeredCount / shuffledQuestions.length) * 100,
+            answered: answeredCount,
+            total: shuffledQuestions.length
+        };
+    };
+
+    if (loading) {
+        return (
+            <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <span>Đang tải bài thi...</span>
+            </div>
+        );
+    }
+
+    if (!exam || !shuffledQuestions.length) {
+        return (
+            <div className="loading-container">
+                <p>Không tìm thấy bài thi hoặc bài thi không có câu hỏi.</p>
+            </div>
+        );
+    }
+
+    const progress = calculateProgress();
+    const currentQuestionData = shuffledQuestions[currentQuestion];
+
+    return (
+        <div className="exam-container">
+            <h2 className="exam-title">{exam.title}</h2>
+            
+            <div className="progress-container">
+                <div className="progress-bar">
+                    <div 
+                        className="progress-fill" 
+                        style={{ width: `${progress.percent}%` }}
+                    ></div>
+                </div>
+                <div className="progress-text">
+                    Đã trả lời {progress.answered}/{progress.total} câu hỏi
+                </div>
+            </div>
+            
+            <div className="pagination">
+                {shuffledQuestions.map((_, index) => (
+                    <div 
+                        key={index}
+                        className={`pagination-item ${index === currentQuestion ? 'active' : ''} ${answers[index] !== null ? 'answered' : ''}`}
+                        onClick={() => goToQuestion(index)}
+                    >
+                        {index + 1}
+                    </div>
+                ))}
+            </div>
+            
+            <div className="question-card">
+                <div className="question-header">
+                    Câu hỏi {currentQuestion + 1}/{shuffledQuestions.length}
+                </div>
+                <div className="question-content">
+                    <div className="question-text">{currentQuestionData.content}</div>
+                    
+                    {currentQuestionData.media && (
+                        <div className="media-container">
+                            {currentQuestionData.media.endsWith('.mp3') ? (
+                                <audio 
+                                    className="audio-control"
+                                    controls 
+                                    src={`http://localhost:5000${currentQuestionData.media}`} 
+                                />
 
     if (!exam || !shuffledQuestions.length) return <div>Loading...</div>;
 
@@ -101,34 +201,70 @@ const Exam = () => {
                         <div>
                             {question.media.endsWith('.mp3') ? (
                                 <audio controls src={`http://localhost:5000${question.media}`} />
+
                             ) : (
-                                <img src={`http://localhost:5000${question.media}`} alt="question media" />
+                                <img 
+                                    className="question-image"
+                                    src={`http://localhost:5000${currentQuestionData.media}`} 
+                                    alt="Hình ảnh câu hỏi" 
+                                />
                             )}
                         </div>
                     )}
-                    {question.answers.map((answer, aIndex) => (
-                        <div key={aIndex}>
-                            <input
-                                type="radio"
-                                name={`question-${qIndex}`}
-                                checked={answers[qIndex] === aIndex}
-                                onChange={() => handleAnswer(qIndex, aIndex)}
-                            />
-                            <span>{answer.content}</span>
-                            {answer.media && (
-                                <div>
-                                    {answer.media.endsWith('.mp3') ? (
-                                        <audio controls src={`http://localhost:5000${answer.media}`} />
-                                    ) : (
-                                        <img src={`http://localhost:5000${answer.media}`} alt="answer media" />
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                    
+                    <div className="answers-container">
+                        {currentQuestionData.answers.map((answer, aIndex) => (
+                            <div 
+                                key={aIndex}
+                                className={`answer-item ${answers[currentQuestion] === aIndex ? 'selected' : ''}`}
+                                onClick={() => handleAnswer(currentQuestion, aIndex)}
+                            >
+                                <div className="answer-radio"></div>
+                                <div className="answer-text">{answer.content}</div>
+                                
+                                {answer.media && (
+                                    <div className="answer-media">
+                                        {answer.media.endsWith('.mp3') ? (
+                                            <audio 
+                                                className="audio-control"
+                                                controls 
+                                                src={`http://localhost:5000${answer.media}`} 
+                                            />
+                                        ) : (
+                                            <img 
+                                                src={`http://localhost:5000${answer.media}`} 
+                                                alt="Hình ảnh đáp án" 
+                                                style={{maxWidth: '200px'}}
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            ))}
-            <button onClick={handleSubmit}>Submit</button>
+            </div>
+            
+            <div className="navigation-buttons">
+                <button 
+                    className="nav-button prev" 
+                    onClick={goToPrevQuestion}
+                    disabled={currentQuestion === 0}
+                >
+                    Câu trước
+                </button>
+                <button 
+                    className="nav-button next" 
+                    onClick={goToNextQuestion}
+                    disabled={currentQuestion === shuffledQuestions.length - 1}
+                >
+                    Câu tiếp theo
+                </button>
+            </div>
+            
+            <button className="submit-button" onClick={handleSubmit}>
+                Nộp bài
+            </button>
         </div>
     );
 };

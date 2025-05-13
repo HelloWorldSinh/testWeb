@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import './CreateExam.css';
 
 const CreateExam = () => {
     const [title, setTitle] = useState('');
@@ -146,52 +147,70 @@ const CreateExam = () => {
     };
 
     return (
-        <div>
-            <h2>Create Exam</h2>
+        <div className="exam-creator">
+            <h2 className="exam-title">Create Exam</h2>
             {!examId ? (
-                <form onSubmit={handleCreateExam}>
+                <form onSubmit={handleCreateExam} className="exam-form">
                     <input
                         type="text"
                         placeholder="Exam title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
+                        required
                     />
                     <input
                         type="datetime-local"
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
+                        required
+                        placeholder="Start Time"
                     />
                     <input
                         type="datetime-local"
                         value={endTime}
                         onChange={(e) => setEndTime(e.target.value)}
+                        required
+                        placeholder="End Time"
                     />
-                    <button type="submit">Create Exam</button>
+                    <button type="submit" className="btn btn-primary">Create Exam</button>
                 </form>
             ) : (
                 <div>
-                    <h3>Exam Code: {examCode}</h3>
+                    <div className="exam-code">
+                        <h3>Exam Code:</h3>
+                        <span className="exam-code-value">{examCode}</span>
+                    </div>
                     {questions.map((question, index) => (
                         <div
                             key={index}
+
+                            className="question-card"
+
                             style={{
                                 marginBottom: '20px',
                                 padding: '10px',
                                 border: '1px solid #ccc',
                                 cursor: question.isEditing ? 'default' : 'pointer',
                             }}
+
                             onClick={() => !question.isEditing && handleEditQuestion(index)}
                         >
-                            <h4>Question {index + 1}</h4>
+                            <div className="question-header">
+                                <h4>Question {index + 1}</h4>
+                            </div>
                             {question.isEditing ? (
-                                <div>
+                                <div className="question-content">
                                     <input
                                         type="text"
+                                        className="question-input"
                                         placeholder="Question content"
                                         value={question.content}
                                         onChange={(e) => handleUpdateQuestion(index, 'content', e.target.value)}
-                                        style={{ width: '100%', marginBottom: '10px' }}
                                     />
+
+                                    <div className="file-input-container">
+                                        <label className="file-input-label">
+
                                     <input
                                         type="file"
                                         accept="image/*,audio/*"
@@ -225,54 +244,114 @@ const CreateExam = () => {
                                             style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}
                                         >
                                             <span style={{ width: '30px' }}>{getAnswerLabel(ansIndex)}.</span>
+
                                             <input
-                                                type="text"
-                                                placeholder="Answer content"
-                                                value={answer.content}
-                                                onChange={(e) => {
-                                                    const newAnswers = [...question.answers];
-                                                    newAnswers[ansIndex].content = e.target.value;
-                                                    handleUpdateQuestion(index, 'answers', newAnswers);
-                                                }}
-                                                style={{ marginRight: '10px', flex: 1 }}
+                                                type="file"
+                                                className="file-input"
+                                                accept="image/*,audio/*"
+                                                onChange={(e) => handleUpdateQuestion(index, 'media', e.target.files[0])}
                                             />
-                                            <label style={{ marginRight: '10px' }}>
-                                                Correct:
+                                            {question.media ? 'Change Media' : 'Upload Media'}
+                                        </label>
+                                        <span className="file-name">{question.media ? question.media.name : ''}</span>
+                                    </div>
+                                    {question.mediaURL && question.mediaType === 'image' && (
+                                        <div className="media-preview">
+                                            <img
+                                                src={question.mediaURL}
+                                                alt="Selected media"
+                                            />
+                                        </div>
+                                    )}
+                                    {question.mediaURL && question.mediaType === 'audio' && (
+                                        <div className="media-preview">
+                                            <audio
+                                                controls
+                                                src={question.mediaURL}
+                                            >
+                                                Your browser does not support the audio element.
+                                            </audio>
+                                        </div>
+                                    )}
+                                    <div className="answer-list">
+                                        {question.answers.map((answer, ansIndex) => (
+                                            <div
+                                                key={ansIndex}
+                                                className="answer-item"
+                                            >
+                                                <div className="answer-label">{getAnswerLabel(ansIndex)}</div>
                                                 <input
-                                                    type="checkbox"
-                                                    checked={answer.isCorrect}
+                                                    type="text"
+                                                    className="answer-input"
+                                                    placeholder="Answer content"
+                                                    value={answer.content}
                                                     onChange={(e) => {
                                                         const newAnswers = [...question.answers];
-                                                        newAnswers[ansIndex].isCorrect = e.target.checked;
+                                                        newAnswers[ansIndex].content = e.target.value;
                                                         handleUpdateQuestion(index, 'answers', newAnswers);
                                                     }}
                                                 />
-                                            </label>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveAnswer(index, ansIndex)}
-                                                style={{ background: 'red', color: 'white', border: 'none', padding: '5px 10px' }}
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
-                                    ))}
-                                    <button
-                                        type="button"
-                                        onClick={() => handleAddAnswer(index)}
-                                        style={{ marginRight: '10px' }}
-                                    >
-                                        Add Answer
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleAddQuestion(index)}
-                                        style={{ background: 'blue', color: 'white', padding: '5px 10px' }}
-                                    >
-                                        Add Question
-                                    </button>
+                                                <label className="correct-checkbox">
+                                                    Correct
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={answer.isCorrect}
+                                                        onChange={(e) => {
+                                                            const newAnswers = [...question.answers];
+                                                            newAnswers[ansIndex].isCorrect = e.target.checked;
+                                                            handleUpdateQuestion(index, 'answers', newAnswers);
+                                                        }}
+                                                    />
+                                                </label>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-danger btn-small"
+                                                    onClick={() => handleRemoveAnswer(index, ansIndex)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="action-buttons">
+                                        <button
+                                            type="button"
+                                            className="btn btn-primary"
+                                            onClick={() => handleAddAnswer(index)}
+                                        >
+                                            Add Answer
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-success"
+                                            onClick={() => handleAddQuestion(index)}
+                                        >
+                                            Add Question
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
+
+                                <div className="question-view">
+                                    <div className="question-title">{question.content}</div>
+                                    {question.mediaURL && question.mediaType === 'image' && (
+                                        <div className="media-preview">
+                                            <img
+                                                src={question.mediaURL}
+                                                alt="Question media"
+                                            />
+                                        </div>
+                                    )}
+                                    {question.mediaURL && question.mediaType === 'audio' && (
+                                        <div className="media-preview">
+                                            <audio
+                                                controls
+                                                src={question.mediaURL}
+                                            >
+                                                Your browser does not support the audio element.
+                                            </audio>
+                                        </div>
+
                                 <div>
                                     <strong>{question.content}</strong>
                                     {question.mediaURL && question.mediaType === 'image' && (
@@ -295,17 +374,16 @@ const CreateExam = () => {
                                         >
                                             Your browser does not support the audio element.
                                         </audio>
+
                                     )}
-                                    <ul style={{ marginTop: '10px' }}>
+                                    <ul className="answer-list-view">
                                         {question.answers.map((ans, ansIndex) => (
                                             <li
                                                 key={ansIndex}
-                                                style={{
-                                                    color: ans.isCorrect ? 'green' : 'black',
-                                                    fontWeight: ans.isCorrect ? 'bold' : 'normal',
-                                                }}
+                                                className={`answer-list-item ${ans.isCorrect ? 'correct' : ''}`}
                                             >
-                                                {getAnswerLabel(ansIndex)}. {ans.content}
+                                                <div className="answer-label-view">{getAnswerLabel(ansIndex)}</div>
+                                                <div className="answer-content">{ans.content}</div>
                                             </li>
                                         ))}
                                     </ul>
@@ -314,7 +392,11 @@ const CreateExam = () => {
                                             e.stopPropagation();
                                             handleRemoveQuestion(index);
                                         }}
+
+                                        className="btn btn-danger"
+
                                         style={{ background: 'red', color: 'white', padding: '5px 10px' }}
+
                                     >
                                         Delete
                                     </button>
@@ -322,8 +404,13 @@ const CreateExam = () => {
                             )}
                         </div>
                     ))}
+
+                    <div className="shuffle-options">
+                        <label className="shuffle-option">
+
                     <div style={{ marginBottom: '20px' }}>
                         <label style={{ marginRight: '20px' }}>
+
                             <input
                                 type="checkbox"
                                 checked={shuffleQuestions}
@@ -331,7 +418,11 @@ const CreateExam = () => {
                             />
                             Trộn câu hỏi
                         </label>
+
+                        <label className="shuffle-option">
+
                         <label>
+
                             <input
                                 type="checkbox"
                                 checked={shuffleAnswers}
@@ -342,7 +433,7 @@ const CreateExam = () => {
                     </div>
                     <button
                         onClick={handleCompleteExam}
-                        style={{ padding: '10px 20px', background: 'green', color: 'white' }}
+                        className="complete-btn"
                     >
                         Complete Exam
                     </button>
