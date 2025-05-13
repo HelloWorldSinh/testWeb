@@ -9,8 +9,10 @@ const Exam = () => {
     const [exam, setExam] = useState(null);
     const [answers, setAnswers] = useState([]);
     const [shuffledQuestions, setShuffledQuestions] = useState([]);
+
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [loading, setLoading] = useState(true);
+
 
     // Hàm trộn mảng (Fisher-Yates shuffle)
     const shuffleArray = (array) => {
@@ -54,7 +56,9 @@ const Exam = () => {
                 setExam(res.data);
                 setShuffledQuestions(questions);
                 setAnswers(questions.map(() => null));
+
                 setLoading(false);
+
             } catch (error) {
                 alert(error.response.data.message);
                 setLoading(false);
@@ -96,7 +100,6 @@ const Exam = () => {
             alert(error.response.data.message);
         }
     };
-
     const goToNextQuestion = () => {
         if (currentQuestion < shuffledQuestions.length - 1) {
             setCurrentQuestion(currentQuestion + 1);
@@ -185,6 +188,20 @@ const Exam = () => {
                                     controls 
                                     src={`http://localhost:5000${currentQuestionData.media}`} 
                                 />
+
+    if (!exam || !shuffledQuestions.length) return <div>Loading...</div>;
+
+    return (
+        <div>
+            <h2>{exam.title}</h2>
+            {shuffledQuestions.map((question, qIndex) => (
+                <div key={question._id}>
+                    <p>{question.content}</p>
+                    {question.media && (
+                        <div>
+                            {question.media.endsWith('.mp3') ? (
+                                <audio controls src={`http://localhost:5000${question.media}`} />
+
                             ) : (
                                 <img 
                                     className="question-image"

@@ -183,7 +183,16 @@ const CreateExam = () => {
                     {questions.map((question, index) => (
                         <div
                             key={index}
+
                             className="question-card"
+
+                            style={{
+                                marginBottom: '20px',
+                                padding: '10px',
+                                border: '1px solid #ccc',
+                                cursor: question.isEditing ? 'default' : 'pointer',
+                            }}
+
                             onClick={() => !question.isEditing && handleEditQuestion(index)}
                         >
                             <div className="question-header">
@@ -198,8 +207,44 @@ const CreateExam = () => {
                                         value={question.content}
                                         onChange={(e) => handleUpdateQuestion(index, 'content', e.target.value)}
                                     />
+
                                     <div className="file-input-container">
                                         <label className="file-input-label">
+
+                                    <input
+                                        type="file"
+                                        accept="image/*,audio/*"
+                                        onChange={(e) => handleUpdateQuestion(index, 'media', e.target.files[0])}
+                                        style={{ marginBottom: '10px' }}
+                                    />
+                                    {question.mediaURL && question.mediaType === 'image' && (
+                                        <img
+                                            src={question.mediaURL}
+                                            alt="Selected media"
+                                            style={{
+                                                maxWidth: '300px',
+                                                height: 'auto',
+                                                marginTop: '10px',
+                                                borderRadius: '5px',
+                                            }}
+                                        />
+                                    )}
+                                    {question.mediaURL && question.mediaType === 'audio' && (
+                                        <audio
+                                            controls
+                                            src={question.mediaURL}
+                                            style={{ marginTop: '10px' }}
+                                        >
+                                            Your browser does not support the audio element.
+                                        </audio>
+                                    )}
+                                    {question.answers.map((answer, ansIndex) => (
+                                        <div
+                                            key={ansIndex}
+                                            style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}
+                                        >
+                                            <span style={{ width: '30px' }}>{getAnswerLabel(ansIndex)}.</span>
+
                                             <input
                                                 type="file"
                                                 className="file-input"
@@ -286,6 +331,7 @@ const CreateExam = () => {
                                     </div>
                                 </div>
                             ) : (
+
                                 <div className="question-view">
                                     <div className="question-title">{question.content}</div>
                                     {question.mediaURL && question.mediaType === 'image' && (
@@ -305,6 +351,30 @@ const CreateExam = () => {
                                                 Your browser does not support the audio element.
                                             </audio>
                                         </div>
+
+                                <div>
+                                    <strong>{question.content}</strong>
+                                    {question.mediaURL && question.mediaType === 'image' && (
+                                        <img
+                                            src={question.mediaURL}
+                                            alt="Question media"
+                                            style={{
+                                                maxWidth: '300px',
+                                                height: 'auto',
+                                                marginTop: '10px',
+                                                borderRadius: '5px',
+                                            }}
+                                        />
+                                    )}
+                                    {question.mediaURL && question.mediaType === 'audio' && (
+                                        <audio
+                                            controls
+                                            src={question.mediaURL}
+                                            style={{ marginTop: '10px' }}
+                                        >
+                                            Your browser does not support the audio element.
+                                        </audio>
+
                                     )}
                                     <ul className="answer-list-view">
                                         {question.answers.map((ans, ansIndex) => (
@@ -322,7 +392,11 @@ const CreateExam = () => {
                                             e.stopPropagation();
                                             handleRemoveQuestion(index);
                                         }}
+
                                         className="btn btn-danger"
+
+                                        style={{ background: 'red', color: 'white', padding: '5px 10px' }}
+
                                     >
                                         Delete
                                     </button>
@@ -330,8 +404,13 @@ const CreateExam = () => {
                             )}
                         </div>
                     ))}
+
                     <div className="shuffle-options">
                         <label className="shuffle-option">
+
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{ marginRight: '20px' }}>
+
                             <input
                                 type="checkbox"
                                 checked={shuffleQuestions}
@@ -339,7 +418,11 @@ const CreateExam = () => {
                             />
                             Trộn câu hỏi
                         </label>
+
                         <label className="shuffle-option">
+
+                        <label>
+
                             <input
                                 type="checkbox"
                                 checked={shuffleAnswers}
